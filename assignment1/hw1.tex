@@ -343,6 +343,109 @@ For HITS:
     \item Defined convergence as when L2 norm difference $< 10^{-6}$
 \end{itemize}
 
+\section{Problem 2: Random Walk Methods for Hub and Authority Scores}
 
+\subsection{Problem Statement}
+We need to prove that the Hub score for a page is proportional to the number of outlinks and that the Authority score is proportional to the number of inlinks when using the following random walk approach:
+
+
+\textbf{For Authority scores:}
+\begin{itemize}
+    \item From page $p_1$, follow back a random inlink to page $p_2$
+    \item From $p_2$, follow forward a random outlink to page $p_3$
+    \item The step takes us from $p_1$ to $p_3$
+\end{itemize}
+
+\textbf{For Hub scores:}
+\begin{itemize}
+    \item From page $p_1$, follow forward a random outlink to page $p_2$
+    \item From $p_2$, follow backward a random inlink to page $p_3$
+    \item The step takes us from $p_1$ to $p_3$
+\end{itemize}
+
+We assume the Markov chains are finite, irreducible, and aperiodic, ensuring a unique stationary distribution.
+
+\subsection{Definitions}
+\begin{itemize}
+    \item $A[i,j] = 1$ if there's a link from page $i$ to page $j$, 0 otherwise
+    \item $\text{in}(j) = \text{number of inlinks to page } j = \sum_i A[i,j]$
+    \item $\text{out}(i) = \text{number of outlinks from page } i = \sum_j A[i,j]$
+\end{itemize}
+
+\subsection{Transition Probabilities}
+
+\textbf{For Authority Random Walk:}\\
+When starting at page $i$:
+\begin{itemize}
+    \item The probability of following a random inlink back to page $k$ is $\frac{A[k,i]}{\text{in}(i)}$
+    \item The probability of following a random outlink from $k$ to $j$ is $\frac{A[k,j]}{\text{out}(k)}$
+\end{itemize}
+
+Therefore, the transition probability from $i$ to $j$ is:
+\begin{equation}
+    P_a(i,j) = \sum_k \frac{A[k,i]}{\text{in}(i)} \times \frac{A[k,j]}{\text{out}(k)}
+\end{equation}
+
+\textbf{For Hub Random Walk:}\\
+When starting at page $i$:
+\begin{itemize}
+    \item The probability of following a random outlink to page $k$ is $\frac{A[i,k]}{\text{out}(i)}$
+    \item The probability of following a random inlink back from $k$ to $j$ is $\frac{A[j,k]}{\text{in}(k)}$
+\end{itemize}
+
+Therefore, the transition probability from $i$ to $j$ is:
+\begin{equation}
+    P_h(i,j) = \sum_k \frac{A[i,k]}{\text{out}(i)} \times \frac{A[j,k]}{\text{in}(k)}
+\end{equation}
+
+\subsection{Authority Score Proof}
+
+Let's hypothesize that the stationary distribution $\pi_a(i)$ is proportional to $\text{in}(i)$, i.e., $\pi_a(i) = c \times \text{in}(i)$ for some constant $c$.
+
+For this to be a stationary distribution, it must satisfy:
+\begin{equation}
+    \pi_a(j) = \sum_i \pi_a(i) P_a(i,j)
+\end{equation}
+
+Substituting our hypothesis:
+\begin{align}
+    \pi_a(j) &= \sum_i c \times \text{in}(i) \times \sum_k \frac{A[k,i]}{\text{in}(i)} \times \frac{A[k,j]}{\text{out}(k)}\\
+    &= c \times \sum_i \sum_k \frac{A[k,i] \times A[k,j]}{\text{out}(k)}\\
+    &= c \times \sum_k \frac{A[k,j]}{\text{out}(k)} \times \sum_i A[k,i]
+\end{align}
+
+Since $\sum_i A[k,i] = \text{out}(k)$ (the number of outlinks from page $k$):
+\begin{align}
+    \pi_a(j) &= c \times \sum_k \frac{A[k,j]}{\text{out}(k)} \times \text{out}(k)\\
+    &= c \times \sum_k A[k,j]\\
+    &= c \times \text{in}(j)
+\end{align}
+
+This confirms the hypothesis that the Authority score $\pi_a(j)$ is proportional to $\text{in}(j)$, the number of inlinks to page $j$.
+
+\subsection{Hub Score Proof}
+
+Similarly, hypothesize that the stationary distribution $\pi_h(i)$ is proportional to $\text{out}(i)$, i.e., $\pi_h(i) = d \times \text{out}(i)$ for some constant $d$.
+
+For this to be a stationary distribution, it must satisfy:
+\begin{equation}
+    \pi_h(j) = \sum_i \pi_h(i) P_h(i,j)
+\end{equation}
+
+Substituting our hypothesis:
+\begin{align}
+    \pi_h(j) &= \sum_i d \times \text{out}(i) \times \sum_k \frac{A[i,k]}{\text{out}(i)} \times \frac{A[j,k]}{\text{in}(k)}\\
+    &= d \times \sum_i \sum_k \frac{A[i,k] \times A[j,k]}{\text{in}(k)}\\
+    &= d \times \sum_k \frac{A[j,k]}{\text{in}(k)} \times \sum_i A[i,k]
+\end{align}
+
+Since $\sum_i A[i,k] = \text{in}(k)$ (the number of inlinks to page $k$):
+\begin{align}
+    \pi_h(j) &= d \times \sum_k \frac{A[j,k]}{\text{in}(k)} \times \text{in}(k)\\
+    &= d \times \sum_k A[j,k]\\
+    &= d \times \text{out}(j)
+\end{align}
+
+This confirms the hypothesis that the Hub score $\pi_h(j)$ is proportional to $\text{out}(j)$, the number of outlinks from page $j$.
 
 \end{document}
