@@ -1,0 +1,348 @@
+\documentclass{article}
+\usepackage{amsmath, amssymb, graphicx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{listings}
+\lstdefinelanguage{JavaScript}{
+  keywords={break, case, catch, continue, debugger, default, delete, do, else, finally, for, function, if, in, instanceof, new, return, switch, throw, try, typeof, var, void, while, with, let, const},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{codegreen}\ttfamily,
+  stringstyle=\color{codepurple}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\title{CS2241 Assignment 1}
+\author{Nico Fidalgo}
+\date{March 26, 2025}
+
+\begin{document}
+
+\maketitle
+
+\section{Problem 1: PageRank and HITS Algorithm Analysis}
+
+\subsection{Problem Statement}
+We are given a directed graph represented by the following adjacency matrix.
+
+\begin{equation}
+A = 
+\begin{pmatrix}
+0 & 0 & 1 & 1 & 0 & 1 \\
+0 & 0 & 1 & 0 & 0 & 1 \\
+0 & 0 & 0 & 1 & 0 & 1 \\
+0 & 1 & 1 & 0 & 0 & 0 \\
+1 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0
+\end{pmatrix}
+\end{equation}
+
+We need to calculate the PageRank scores and Hub and Authority scores. The interpretation of the adjacency matrix is:
+
+\begin{itemize}
+    \item Node $a$ has outgoing edges to nodes $c$, $d$, and $f$
+    \item Node $b$ has outgoing edges to nodes $c$ and $f$
+    \item Node $c$ has outgoing edges to nodes $d$ and $f$
+    \item Node $d$ has outgoing edges to nodes $b$ and $c$
+    \item Node $e$ has an outgoing edge to node $a$
+    \item Node $f$ has an outgoing edge to node $e$
+\end{itemize}
+
+\subsection{PageRank Algorithm}
+PageRank was designed to model the behavior of a random surfer on the web. The algorithm assigns a score to each node in a directed graph based on its structural importance. The intuition is that a node is important if many important nodes point to it and the importance of a node is divided among its outgoing links.
+
+\begin{equation}
+\mathbf{p} = (1-d) \cdot \frac{\mathbf{1}}{n} + d \cdot M \cdot \mathbf{p}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $d$ is the damping factor (typically 0.85)
+    \item $n$ is the number of nodes
+    \item $\mathbf{1}$ is a vector of all 1's
+    \item $M$ is the transition matrix (columns sum to 1)
+\end{itemize}
+
+For each node $i$ with outgoing links, we set:
+\begin{equation}
+M_{j,i} = \frac{1}{\text{out-degree}(i)}
+\end{equation}
+if there is a link from node $i$ to node $j$, and 0 otherwise. The algorithm for computing PageRank scores is:
+
+\begin{algorithm}
+\caption{PageRank Score Calculation}
+\begin{algorithmic}[1]
+\State Initialize $\mathbf{p}^{(0)} = \frac{1}{n} \cdot \mathbf{1}$
+\For{$t = 0, 1, 2, \ldots$ until convergence}
+    \State $\mathbf{p}^{(t+1)} = (1-d) \cdot \frac{\mathbf{1}}{n} + d \cdot M \cdot \mathbf{p}^{(t)}$
+    \If{$\|\mathbf{p}^{(t+1)} - \mathbf{p}^{(t)}\| < \text{tolerance}$}
+        \State \textbf{break}
+    \EndIf
+\EndFor
+\State Normalize $\mathbf{p}$ to sum to 1
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{PageRank Implementation}
+I wrote a JavaScript program to implement the PageRank algorithm:
+
+\begin{lstlisting}[language=JavaScript]
+import * as math from 'mathjs';
+
+// Adjacency matrix from the problem
+const A = [
+    [0, 0, 1, 1, 0, 1],  // a -> *
+    [0, 0, 1, 0, 0, 1],  // b -> *
+    [0, 0, 0, 1, 0, 1],  // c -> *
+    [0, 1, 1, 0, 0, 0],  // d -> *
+    [1, 0, 0, 0, 0, 0],  // e -> *
+    [0, 0, 0, 0, 1, 0]   // f -> *
+];
+
+// Number of nodes
+const n = A.length;
+
+// Out-degrees
+const out_degrees = A.map(row => row.reduce((sum, val) => sum + val, 0));
+console.log("Out-degrees:", out_degrees);
+
+// Create transition matrix (column-stochastic)
+const M = Array(n).fill().map(() => Array(n).fill(0));
+for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+        if (A[i][j] > 0) {
+            M[j][i] = 1.0 / out_degrees[i];
+        }
+    }
+}
+
+// PageRank parameters
+const d = 0.85;  // Damping factor
+const max_iter = 100;
+const tol = 1e-6;
+
+// Initialize PageRank
+let pr = Array(n).fill(1/n);
+
+// Algorithm iteration
+for (let iter = 0; iter < max_iter; iter++) {
+    // Calculate M * pr
+    const M_pr = Array(n).fill(0);
+    for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+            M_pr[i] += M[i][j] * pr[j];
+        }
+    }
+    
+    // Calculate (1-d)/n + d * (M * pr)
+    const pr_new = M_pr.map(val => (1-d)/n + d * val);
+    
+    // Check convergence
+    const diff = math.norm(pr_new.map((val, idx) => val - pr[idx]));
+    if (diff < tol) {
+        pr = pr_new;
+        console.log(`\nPageRank converged after ${iter+1} iterations.`);
+        break;
+    }
+    
+    pr = pr_new;
+}
+
+// Normalize to sum to 1
+const pr_sum = pr.reduce((sum, val) => sum + val, 0);
+pr = pr.map(val => val / pr_sum);
+\end{lstlisting}
+
+\subsection{PageRank Results}
+After running the algorithm, I obtained the following PageRank scores:
+
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+\textbf{Node} & \textbf{PageRank Score} \\
+\hline
+$a$ & 0.186551 \\
+$b$ & 0.091079 \\
+$c$ & 0.182643 \\
+$d$ & 0.155479 \\
+$e$ & 0.190060 \\
+$f$ & 0.194188 \\
+\hline
+\end{tabular}
+\end{center}
+
+Nodes $f$, $e$, and $a$ have the highest PageRank scores, indicating they are structurally important in this network. Node $b$ has the lowest score, suggesting it's less central in the graph's link structure.
+
+\subsection{HITS Algorithm}
+The Hyperlink-Induced Topic Search (HITS) algorithm identifies two types of important nodes in a directed graph: hubs which are nodes that point to many good authorities, and authorities which are nodes that are pointed to by many good hubs. The hub ($\mathbf{h}$) and authority ($\mathbf{a}$) vectors satisfy:
+\begin{align}
+\mathbf{a} &= A^T \mathbf{h} \\
+\mathbf{h} &= A \mathbf{a}
+\end{align}
+
+where $A$ is the adjacency matrix of the graph. The algorithm for computing HITS scores is:
+
+\begin{algorithm}
+\caption{HITS Score Calculation}
+\begin{algorithmic}[1]
+\State Initialize $\mathbf{h}^{(0)} = \mathbf{1}$ and $\mathbf{a}^{(0)} = \mathbf{1}$
+\For{$t = 0, 1, 2, \ldots$ until convergence}
+    \State $\mathbf{a}^{(t+1)} = A^T \mathbf{h}^{(t)}$
+    \State Normalize $\mathbf{a}^{(t+1)}$
+    \State $\mathbf{h}^{(t+1)} = A \mathbf{a}^{(t+1)}$
+    \State Normalize $\mathbf{h}^{(t+1)}$
+    \If{$\|\mathbf{a}^{(t+1)} - \mathbf{a}^{(t)}\| < \text{tolerance}$ and $\|\mathbf{h}^{(t+1)} - \mathbf{h}^{(t)}\| < \text{tolerance}$}
+        \State \textbf{break}
+    \EndIf
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{HITS Implementation}
+Again, I wrote a JavaScript program to implement the HITS algorithm:
+
+\begin{lstlisting}[language=JavaScript]
+import * as math from 'mathjs';
+
+// Adjacency matrix from the problem
+const A = [
+    [0, 0, 1, 1, 0, 1],  // a -> *
+    [0, 0, 1, 0, 0, 1],  // b -> *
+    [0, 0, 0, 1, 0, 1],  // c -> *
+    [0, 1, 1, 0, 0, 0],  // d -> *
+    [1, 0, 0, 0, 0, 0],  // e -> *
+    [0, 0, 0, 0, 1, 0]   // f -> *
+];
+
+// Number of nodes
+const n = A.length;
+
+// HITS parameters
+const max_iter = 100;
+const tol = 1e-6;
+
+// Initialize hub and authority scores
+let hub = Array(n).fill(1);
+let auth = Array(n).fill(1);
+
+// Compute transpose of A
+const AT = Array(n).fill().map(() => Array(n).fill(0));
+for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+        AT[i][j] = A[j][i];
+    }
+}
+
+// HITS iteration
+for (let iter = 0; iter < max_iter; iter++) {
+    // Update authority scores: a = A^T * h
+    const auth_new = Array(n).fill(0);
+    for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+            auth_new[i] += AT[i][j] * hub[j];
+        }
+    }
+    
+    // Normalize authority scores
+    const auth_norm = math.norm(auth_new);
+    const auth_normalized = auth_new.map(val => val / auth_norm);
+    
+    // Update hub scores: h = A * a
+    const hub_new = Array(n).fill(0);
+    for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+            hub_new[i] += A[i][j] * auth_normalized[j];
+        }
+    }
+    
+    // Normalize hub scores
+    const hub_norm = math.norm(hub_new);
+    const hub_normalized = hub_new.map(val => val / hub_norm);
+    
+    // Check convergence
+    const auth_diff = math.norm(auth_normalized.map((val, idx) => val - auth[idx]));
+    const hub_diff = math.norm(hub_normalized.map((val, idx) => val - hub[idx]));
+    
+    if (auth_diff < tol && hub_diff < tol) {
+        auth = auth_normalized;
+        hub = hub_normalized;
+        console.log(`HITS converged after ${iter+1} iterations.`);
+        break;
+    }
+    
+    auth = auth_normalized;
+    hub = hub_normalized;
+}
+\end{lstlisting}
+
+\subsection{HITS Results}
+After running the HITS algorithm, I obtained the following scores:
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Node} & \textbf{Hub Score} & \textbf{Authority Score} \\
+\hline
+$a$ & 0.684439 & 0.000000 \\
+$b$ & 0.501536 & 0.113935 \\
+$c$ & 0.446890 & 0.590796 \\
+$d$ & 0.283360 & 0.454889 \\
+$e$ & 0.000000 & 0.000000 \\
+$f$ & 0.000000 & 0.656548 \\
+\hline
+\end{tabular}
+\end{center}
+
+Nodes $a$, $b$, and $c$ have high hub scores, indicating they are good at pointing to authority nodes. This makes sense as $a$ and $b$ point to multiple nodes including high authority nodes $c$ and $f$. Nodes $e$ and $f$ have zero hub scores because they don't point to any nodes with high authority scores.
+
+Nodes $f$ and $c$ have the highest authority scores, followed by node $d$. This means they are pointed to by good hub nodes. Again, this makes sense as node $f$ and $c$ are pointed to by nodes $a$ and $b$ which have high hub scores. Nodes $a$ and $e$ have zero authority scores because they aren't pointed to by any good hub nodes.
+
+\subsection{Assumptions}
+For PageRank scores:
+\begin{itemize}
+    \item Used a damping factor of 0.85 (standard value)
+    \item Defined convergence as when L2 norm difference $< 10^{-6}$
+\end{itemize}
+
+For HITS:
+\begin{itemize}
+    \item Defined convergence as when L2 norm difference $< 10^{-6}$
+\end{itemize}
+
+
+
+\end{document}
