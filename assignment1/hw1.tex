@@ -603,4 +603,63 @@ For the single-item sampling, the expected frequency is $1/10 = 0.1$ for each it
 
 Reservoir sampling is particularly valuable in streaming algorithms because it maintains a representative sample without needing knowledge of the total stream size, it uses constant memory as it stores only $s$ items, it processes each item in constant time, and the sample remains uniform at each step of the process. This makes it ideal for applications like processing large data streams that don't fit in memory, online analytics where a representative sample is needed in real time, distributed systems where data is generated across multiple sources, and monitoring high-volume log data where sampling is necessary for performance.
 
+\section{Problem 4: Flipping a Coin Until First Head}
+
+\subsection{Problem Statement}
+A fair coin is flipped until the first head occurs. Let $X$ be the number of flips required. I must first find the entropy $H(X)$ in bits and then describe how to ask yes/no questions to determine $X$ adn find the expected number of such questions and compare this result to $H(X)$.
+
+\subsection{(a) Entropy Calculation}
+
+Since the coin is fair, the probability that $X = k$ (i.e., the first head occurs on the $k$-th flip) is
+\[
+P(X = k) \;=\; \left(\frac12\right)^k,
+\quad k = 1,2,3,\ldots
+\]
+We use the fact that for a geometric random variable with parameter $p=\tfrac12$ (counting the number of trials up to and including the first success), the distribution is:
+\[
+P(X = k) = \frac12 \left(\frac12\right)^{\,k-1} = \left(\frac12\right)^k.
+\]
+The entropy in bits is
+\[
+H(X) \;=\; - \sum_{k=1}^{\infty} P(X=k)\,\log_2 \bigl[P(X=k)\bigr].
+\]
+Substitute $P(X=k) = (1/2)^k$, and note that $\log_2 \bigl[ (1/2)^k \bigr] = -k$. So
+\[
+H(X)
+= - \sum_{k=1}^{\infty} \left(\frac12\right)^k \bigl(-k\bigr)
+= \sum_{k=1}^{\infty} k \,\left(\frac12\right)^k.
+\]
+We now use the series identity:
+\[
+\sum_{k=1}^{\infty} k \,x^k \;=\; \frac{x}{(1-x)^2}, 
+\quad \text{for } -1 < x < 1.
+\]
+With $x = \tfrac12$, we get
+\[
+\sum_{k=1}^{\infty} k \left(\frac12\right)^k
+= \frac{\tfrac12}{(1 - \tfrac12)^2} \;=\; \frac{\tfrac12}{(\tfrac12)^2} 
+= \frac{\tfrac12}{\tfrac14} 
+= 2.
+\]
+Thus, the entropy $H(X) = 2$ bits.
+
+\subsection{(b) Yes/No Questions and Comparison}
+
+To determine $X$ from yes/no questions, we want a strategy that minimizes the expected number of questions. We can think of this as constructing a decision tree for the geometric distribution.
+
+One possible line of reasoning is:
+\begin{itemize}
+    \item First question: ``Is $X=1$?'' 
+        \begin{itemize}
+        \item With probability $1/2$, the answer is yes, and we are done with just 1 question.
+        \item With probability $1/2$, the answer is no, in which case we continue to ask about $X=2$, $X=3$, etc.
+        \end{itemize}
+    \item We can create a decision tree that accounts for the probabilities $(1/2)^k$ at each branch.
+\end{itemize}
+This geometric distribution achieves an expected number of questions exactly $2$, matching the entropy $H(X) = 2$ bits. In other words, on average, we need 2 yes/no questions to determine $X$. This matches the lower bound given by $H(X)$, illustrating that our questioning strategy is asymptotically optimal.
+
+Hence, the entropy $H(X)$ provides a fundamental limit on the average number of bits (yes/no questions) required, and our constructed question strategy can match that limit.
+
+
+
 \end{document}
