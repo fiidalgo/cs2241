@@ -608,7 +608,7 @@ Reservoir sampling is particularly valuable in streaming algorithms because it m
 \subsection{Problem Statement}
 A fair coin is flipped until the first head occurs. Let $X$ be the number of flips required. I must first find the entropy $H(X)$ in bits and then describe how to ask yes/no questions to determine $X$ adn find the expected number of such questions and compare this result to $H(X)$.
 
-\subsection{(a) Entropy Calculation}
+\subsection{Entropy Calculation}
 
 Since the coin is fair, the probability that $X = k$ (i.e., the first head occurs on the $k$-th flip) is
 \[
@@ -643,7 +643,7 @@ With $x = \tfrac12$, we get
 \]
 Thus, the entropy $H(X) = 2$ bits.
 
-\subsection{(b) Yes/No Questions and Comparison}
+\subsection{Yes/No Questions and Comparison}
 
 To determine $X$ from yes/no questions, we want a strategy that minimizes the expected number of questions. We can think of this as constructing a decision tree for the geometric distribution.
 
@@ -660,6 +660,439 @@ This geometric distribution achieves an expected number of questions exactly $2$
 
 Hence, the entropy $H(X)$ provides a fundamental limit on the average number of bits (yes/no questions) required, and our constructed question strategy can match that limit.
 
+\section{Problem 5: Arithmetic Coding}
 
+\subsection{Problem Statement} 
+Consider arithmetic coding for the string \texttt{abcbaab} given the probabilities:
+\[
+P(a)=0.2,\quad P(b)=0.3,\quad P(c)=0.5.
+\]
+We must (1) show each step of idealized arithmetic coding (with real-number arithmetic) for the string \texttt{abcbaab}, and then (2) decode a sequence of length 10 for the real number $0.63215699$ using the same model and intervals.
+
+\subsection{Encoding \texttt{abcbaab}}
+
+We begin with the interval $[0,1)$. At each step:
+\[
+\text{If our current interval is } [L, R),
+\]
+we subdivide it into subintervals based on the probabilities $0.2, 0.3,$ and $0.5$ for $a, b, c$:
+\[
+\begin{aligned}
+&\text{Interval for } a : [\,L,\; L + 0.2(R-L)\!),\\
+&\text{Interval for } b : [\,L + 0.2(R-L),\; L + 0.5(R-L)\!),\\
+&\text{Interval for } c : [\,L + 0.5(R-L),\; R\!).
+\end{aligned}
+\]
+We pick the subinterval matching the next character and let that become our new $[L,R)$.
+
+\paragraph{String: \texttt{abcbaab}}
+
+\begin{enumerate}
+    \item \textbf{Step 1 (encode `a`):} 
+    \[
+    [L,R) = [0,1) \;\;\to\; 
+      \text{subinterval for $a$} = [0,\,0.2).
+    \]
+    New interval: $[0,\,0.2)$.
+
+    \item \textbf{Step 2 (encode `b`):}
+    \[
+    [L,R) = [0,\,0.2)\quad \Delta = 0.2.
+    \]
+    Subinterval for $b$ is $[\,L + 0.2\Delta,\; L + 0.5\Delta) = [0.04,\; 0.1).$
+    New interval: $[0.04,\,0.1)$.
+
+    \item \textbf{Step 3 (encode `c`):}
+    \[
+    [L,R) = [0.04,\,0.1)\quad \Delta = 0.06.
+    \]
+    Subinterval for $c$ is $[\,0.04 + 0.5\cdot 0.06,\; 0.1) = [0.07,\; 0.1).$
+    New interval: $[0.07,\,0.1)$.
+
+    \item \textbf{Step 4 (encode `b`):}
+    \[
+    [L,R) = [0.07,\,0.1)\quad \Delta = 0.03.
+    \]
+    Subinterval for $b$ is $[\,0.07 + 0.2\cdot 0.03,\; 0.07 + 0.5\cdot 0.03) = [0.076,\; 0.0855).$
+    New interval: $[0.076,\,0.0855)$.
+
+    \item \textbf{Step 5 (encode `a`):}
+    \[
+    [L,R) = [0.076,\,0.0855)\quad \Delta = 0.0095.
+    \]
+    Subinterval for $a$ is $[\,0.076,\; 0.076 + 0.2\cdot 0.0095) = [0.076,\; 0.0779).$
+    New interval: $[0.076,\,0.0779)$.
+
+    \item \textbf{Step 6 (encode `a`):}
+    \[
+    [L,R) = [0.076,\,0.0779)\quad \Delta = 0.0019.
+    \]
+    Subinterval for $a$ is $[\,0.076,\; 0.076 + 0.2\cdot 0.0019) = [0.076,\; 0.07638).$
+    New interval: $[0.076,\,0.07638)$.
+
+    \item \textbf{Step 7 (encode `b`):}
+    \[
+    [L,R) = [0.076,\,0.07638)\quad \Delta = 0.00038.
+    \]
+    Subinterval for $b$ is $[\,0.076 + 0.2\cdot 0.00038,\; 0.076 + 0.5\cdot 0.00038) = [0.076076,\; 0.07619)$.
+    Final interval: $[0.076076,\,0.07619)$.
+\end{enumerate}
+
+Hence, the arithmetic-coded value for \texttt{abcbaab} is any real number in 
+\[
+[\,0.076076,\; 0.07619).
+\]
+
+\subsection{Decoding From $0.63215699$ for 10 Symbols}
+
+We now decode a 10-symbol sequence assuming $P(a)=0.2, P(b)=0.3, P(c)=0.5$. At each step, we split the current interval $[L,R)$ into subintervals for $a, b, c$ and see where $0.63215699$ falls.
+
+\begin{enumerate}
+\item \textbf{Step 1:} Start $[0,1)$.  
+  \[
+    a:[0,0.2),\quad b:[0.2,0.5),\quad c:[0.5,1).
+  \]
+  Since $0.63215699 \in [0.5,1)$, the first symbol is $c$. 
+  New interval: $[0.5,1)$.
+
+\item \textbf{Step 2:} Interval $[0.5,1)$ (length $0.5$).  
+  \[
+    a:[0.5,0.6),\quad b:[0.6,0.75),\quad c:[0.75,1).
+  \]
+  $0.63215699 \in [0.6,0.75)\implies$ second symbol is $b$.  
+  New interval: $[0.6,0.75)$.
+
+\item \textbf{Step 3:} Interval $[0.6,0.75)$ (length $0.15$).  
+  \[
+    a:[0.6,0.63),\quad b:[0.63,0.675),\quad c:[0.675,0.75).
+  \]
+  $0.63215699 \in [0.63,0.675)\implies$ third symbol is $b$.  
+  New interval: $[0.63,0.675)$.
+
+\item \textbf{Step 4:} Interval $[0.63,0.675)$ (length $0.045$).  
+  \[
+    a:[0.63,0.639),\quad b:[0.639,0.6525),\quad c:[0.6525,0.675).
+  \]
+  $0.63215699 < 0.639\implies$ fourth symbol is $a$.  
+  New interval: $[0.63,0.639)$.
+
+\item \textbf{Step 5:} Interval $[0.63,0.639)$ (length $0.009$).  
+  \[
+    a:[0.63,0.6318),\quad b:[0.6318,0.6345),\quad c:[0.6345,0.639).
+  \]
+  $0.63215699 \in [0.6318,0.6345)\implies$ fifth symbol is $b$.  
+  New interval: $[0.6318,0.6345)$.
+
+\item \textbf{Step 6:} Interval $[0.6318,0.6345)$ (length $0.0027$).  
+  \[
+    a:[0.6318,0.63234),\quad b:[0.63234,0.63315),\quad c:[0.63315,0.6345).
+  \]
+  $0.63215699 < 0.63234\implies$ sixth symbol is $a$.  
+  New interval: $[0.6318,0.63234)$.
+
+\item \textbf{Step 7:} Interval $[0.6318,0.63234)$ (length $0.00054$).  
+  \[
+    a:[0.6318,0.631908),\quad b:[0.631908,0.63207),\quad c:[0.63207,0.63234).
+  \]
+  $0.63215699 > 0.63207\implies$ seventh symbol is $c$.  
+  New interval: $[0.63207,0.63234)$.
+
+\item \textbf{Step 8:} Interval $[0.63207,0.63234)$ (length $0.00027$).  
+  \[
+    a:[0.63207,0.632124),\quad b:[0.632124,0.632205),\quad c:[0.632205,0.63234).
+  \]
+  $0.63215699 \in [0.632124,0.632205)\implies$ eighth symbol is $b$.  
+  New interval: $[0.632124,0.632205)$.
+
+\item \textbf{Step 9:} Interval $[0.632124,0.632205)$ (length $0.000081$).  
+  \[
+    a:[0.632124,0.6321402),\quad b:[0.6321402,0.6321645),\quad c:[0.6321645,0.632205).
+  \]
+  $0.63215699 < 0.6321645\implies$ ninth symbol is $b$.  
+  New interval: $[0.6321402,0.6321645)$.
+
+\item \textbf{Step 10:} Interval $[0.6321402,0.6321645)$ (length $0.0000243$).  
+  \[
+    a:[0.6321402,0.63214506),\quad b:[0.63214506,0.63215235),\quad c:[0.63215235,0.6321645).
+  \]
+  $0.63215699 \in [0.63215235,0.6321645)\implies$ tenth symbol is $c$.
+\end{enumerate}
+
+Hence, the decoded 10-symbol sequence is
+\[
+c,\; b,\; b,\; a,\; b,\; a,\; c,\; b,\; b,\; c.
+\]
+
+\section{Problem 6: Compression Methods}
+
+\subsection{Problem Statement}
+We want to compress the string:
+\[
+\texttt{"abracadabraarbadacarba"}
+\]
+using three methods:
+\begin{itemize}
+  \item LZ77 with a window size of 6 and a lookahead buffer of size 6.
+  \item LZ78.
+  \item LZW (with \{\texttt{a},\texttt{b},\texttt{c},\texttt{d},\texttt{r}\} in the dictionary initially, in alphabetical order).
+\end{itemize}
+
+\subsection{LZ77 (Window = 6, Lookahead Buffer = 6)}
+
+We scan the string \texttt{"abracadabraarbadacarba"} from left to right, always allowing up to 6 characters of search history and up to 6 characters of lookahead. We output triples $(\mathrm{distance}, \mathrm{length}, \mathrm{nextChar})$ each time. The string, indexed from 0 to 21, is:
+
+\[
+\begin{array}{l}
+\text{Indices: }0\;\;1\;\;2\;\;3\;\;4\;\;5\;\;6\;\;7\;\;8\;\;9\;\;10\;11\;12\;13\;14\;15\;16\;17\;18\;19\;20\;21\\
+\text{Chars:  }a\;\;b\;\;r\;\;a\;\;c\;\;a\;\;d\;\;a\;\;b\;\;r\;\;a\;\;a\;\;r\;\;b\;\;a\;\;d\;\;a\;\;c\;\;a\;\;r\;\;b\;\;a
+\end{array}
+\]
+
+We encode as follows:
+
+\begin{enumerate}
+  \item \textbf{Position 0}, no search window: no match. Output $(0,0,\texttt{a})$. Move to index 1.
+  \item \textbf{Position 1}, search window = `a`: no match for `b`. Output $(0,0,\texttt{b})$. Move to index 2.
+  \item \textbf{Position 2}, search = `ab`: no match for `r`. Output $(0,0,\texttt{r})$. Move to index 3.
+  \item \textbf{Position 3}, search = `abr`: next is `a`; we find a 1-length match for `a` (found at index 0). Next char after that is `c` (index 4). Output $(3,1,\texttt{c})$. We skip the `a` (index 3) plus that next char (index 4), so jump to index 5.
+  \item \textbf{Position 5}, search (up to length 6) = `abrac` (indices 0--4). The substring `a` at index 5 matches `a` in the window (e.g., at index 3). Next char is `d` (index 6). Output $(2,1,\texttt{d})$. Move to index 7.
+  \item \textbf{Position 7}, search = `bracad` (indices 1--6). The substring `a` at index 7 matches the `a` in the window (e.g., index 5). Next char is `b` (index 8). Output $(2,1,\texttt{b})$. Move to index 9.
+  \item \textbf{Position 9}, search = `acadab` (indices 3--8). We see `r` at index 9 has no direct multi-length match. Output $(0,0,\texttt{r})$. Move to index 10.
+  \item \textbf{Position 10}, search = `cadabr` (indices 4--9). We see `a` at index 10 can match single `a` in the window. Next char is `a` (index 11). So output $(1,1,\texttt{a})$. Move to index 12.
+  \item \textbf{Position 12}, search = `dabra a` (indices 6--11). Next substring is `r` at index 12. We match `r` from index 9, length 1. Next char is `b` (index 13). Output $(3,1,\texttt{b})$. Move to index 14.
+  \item \textbf{Position 14}, search = `abraar` (indices 8--13). The substring `a` at index 14 matches in the window. Next char is `d` (15). Output $(3,1,\texttt{d})$. Move to index 16.
+  \item \textbf{Position 16}, search = `raarba` (indices 10--15). The substring `a` at index 16 matches the `a` at index 14. Next char is `c` (17). Output $(2,1,\texttt{c})$. Move to index 18.
+  \item \textbf{Position 18}, search = `arbad a c` (indices 12--17; effectively up to 6 chars). We see `a` at 18 matches the `a` at 16. Next char is `r` (19). Output $(2,1,\texttt{r})$. Move to index 20.
+  \item \textbf{Position 20}, search = `badacar` (indices 14--19). `b` at 20 is new. Output $(0,0,\texttt{b})$. Move to index 21.
+  \item \textbf{Position 21}, search = `adacarb` (indices 15--20). The last character is `a`. No multi-length match; output $(0,0,\texttt{a})$. Done.
+\end{enumerate}
+
+Thus, the final sequence of LZ77 triples is:
+\[
+\begin{aligned}
+&(0,0,\texttt{a}),\;(0,0,\texttt{b}),\;(0,0,\texttt{r}),\;(3,1,\texttt{c}),\;(2,1,\texttt{d}),\;(2,1,\texttt{b}),\\
+&(0,0,\texttt{r}),\;(1,1,\texttt{a}),\;(3,1,\texttt{b}),\;(3,1,\texttt{d}),\;(2,1,\texttt{c}),\;(2,1,\texttt{r}),\\
+&(0,0,\texttt{b}),\;(0,0,\texttt{a}).
+\end{aligned}
+\]
+
+\subsection{LZ78}
+
+For LZ78, we maintain a dictionary of substrings (each with an index). We scan from left to right, always outputting $(\mathrm{index}, \mathrm{nextChar})$ where index is the dictionary index of hte longest matching prefix found and nextChar is the next new character that extends that prefix.We then add that new substring (prefix + new character) to the dictionary.
+
+\begin{enumerate}
+\item Read `a` (index 0). Not in dictionary, so output $(0,\texttt{a})$. Dictionary: (1) `a`.
+\item Read `b` (index 1). Not in dictionary, output $(0,\texttt{b})$. Dictionary: (1) `a`, (2) `b`.
+\item Read `r` (index 2). Not in dictionary, output $(0,\texttt{r})$. Dictionary: (1) `a`, (2) `b`, (3) `r`.
+\item Read `a` (index 3). That is in dictionary entry 1. Next char is `c` (index 4). Substring `ac` not in dictionary. Output $(1,\texttt{c})$. Dictionary: (1) `a`, (2) `b`, (3) `r`, (4) `ac`.
+\item Now we move past `a,c` (indices 3,4). Next index 5 is `a`. That is dictionary entry 1. Next char is `d` (6). `ad` not in dictionary, so output $(1,\texttt{d})$. 
+  Dictionary: (5) `ad` added.
+\item Move past `a,d`. Next index 7 is `a`. That is entry 1. Next char is `b` (8). `ab` not in dictionary. Output $(1,\texttt{b})$. Dictionary: (6) `ab`.
+\item Next index 9 is `r` (dictionary entry 3). Next char is `a` (10). `ra` not in dictionary. Output $(3,\texttt{a})$. Dictionary: (7) `ra`.
+\item Next index 11 is `a` (entry 1). Next char is `r` (12). `ar` not in dictionary. Output $(1,\texttt{r})$. Dictionary: (8) `ar`.
+\item Next index 13 is `b` (entry 2). Next char is `a` (14). `ba` not in dictionary. Output $(2,\texttt{a})$. Dictionary: (9) `ba`.
+\item Index 15 is `d`. Not in dictionary, so output $(0,\texttt{d})$. Dictionary: (10) `d`.
+\item Index 16 is `a` (entry 1). Next char is `c` (17). `ac` is entry 4, so we have a prefix. Then the next char after that is `a` (18): `aca` not in dictionary. So we output $(4,\texttt{a})$. Dictionary: (11) `aca`.
+\item Index 19 is `r` (entry 3). Next char is `b` (20). `rb` not in dictionary. Output $(3,\texttt{b})$. Dictionary: (12) `rb`.
+\item Final index 21 is `a` (entry 1), but we have no next character left. Often we do $(1,\textit{EOF})$ or a special marker. For simplicity, we can just treat it as $(0,\texttt{a})$ if we prefer a fresh literal. Here, let's do $(0,\texttt{a})$. Dictionary: (13) `a` (repeated, though duplicates can happen in LZ78).
+\end{enumerate}
+
+Therefore, the final LZ78 output pairs are:
+\[
+\begin{aligned}
+&(0,\texttt{a}),\, (0,\texttt{b}),\, (0,\texttt{r}),\, (1,\texttt{c}),\, (1,\texttt{d}),\, (1,\texttt{b}),\\
+&(3,\texttt{a}),\, (1,\texttt{r}),\, (2,\texttt{a}),\, (0,\texttt{d}),\, (4,\texttt{a}),\, (3,\texttt{b}),\, (0,\texttt{a}).
+\end{aligned}
+\]
+
+\subsection{LZW}
+
+Here, we initialize the dictionary with single characters:
+\[
+1=\texttt{a},\quad 2=\texttt{b},\quad 3=\texttt{c},\quad 4=\texttt{d},\quad 5=\texttt{r}.
+\]
+We parse the string \texttt{abracadabraarbadacarba} from left to right, building the code sequence. Let $w$ be the current working prefix.
+
+\begin{enumerate}
+\item Start $w=\varepsilon$ (empty).
+\item Read `a`. $w+\texttt{a}=\texttt{a}$ is in the dictionary (code=1). Keep going.
+\item Next char `b`. Now $w+\texttt{b}=\texttt{ab}$ is \emph{not} in the dictionary.  
+  Output the code for $w=\texttt{a}$: that is 1.  
+  Add `ab` to dictionary with a new code: $6=\texttt{ab}$.  
+  Set $w=\texttt{b}$.
+\item Next char `r`. $w+\texttt{r}=\texttt{br}$ is not in dictionary.  
+  Output code of $w=\texttt{b}$: 2.  
+  Add `br` to dictionary: $7=\texttt{br}$.  
+  $w=\texttt{r}$.
+\item Next char `a`. $w+\texttt{a}=\texttt{ra}$ is not in dictionary.  
+  Output code of $w=\texttt{r}$: 5.  
+  Add `ra`: $8=\texttt{ra}$.  
+  $w=\texttt{a}$.
+\item Next char `c`. $w+\texttt{c}=\texttt{ac}$ not in dictionary.  
+  Output code of $w=\texttt{a}$: 1.  
+  Add `ac`: $9=\texttt{ac}$.  
+  $w=\texttt{c}$.
+\item Next char `a`. $w+\texttt{a}=\texttt{ca}$ not in dictionary.  
+  Output code of $w=\texttt{c}$: 3.  
+  Add `ca`: $10=\texttt{ca}$.  
+  $w=\texttt{a}$.
+\item Next char `d`. $w+\texttt{d}=\texttt{ad}$ not in dictionary.  
+  Output code of $w=\texttt{a}$: 1.  
+  Add `ad`: $11=\texttt{ad}$.  
+  $w=\texttt{d}$.
+\item Next char `a`. $w+\texttt{a}=\texttt{da}$ not in dictionary.  
+  Output $w=\texttt{d}$: code=4.  
+  Add `da`: $12=\texttt{da}$.  
+  $w=\texttt{a}$.
+\item Next char `b`. $w+\texttt{b}=\texttt{ab}$ \textit{is} dictionary entry 6. So $w=\texttt{ab}$.  
+  Next char `r`. $w+\texttt{r}=\texttt{abr}$ not in dictionary.  
+  Output code of $w=\texttt{ab}$: 6.  
+  Add `abr`: $13=\texttt{abr}$.  
+  $w=\texttt{r}$.
+\item Next char `a`. $w+\texttt{a}=\texttt{ra}$ is dictionary entry 8, so $w=\texttt{ra}$.  
+  Next char `a`. $w+\texttt{a}=\texttt{raa}$ not in dictionary.  
+  Output code($\texttt{ra}$)=8.  
+  Add `raa`: $14=\texttt{raa}$.  
+  $w=\texttt{a}$.
+\item Next char `r`. $w+\texttt{r}=\texttt{ar}$ not in dictionary (we have `ac`, `ad`, but not `ar`).  
+  Output code($\texttt{a}$)=1.  
+  Add `ar`: $15=\texttt{ar}$.  
+  $w=\texttt{r}$.
+\item Next char `b`. $w+\texttt{b}=\texttt{rb}$ not in dictionary.  
+  Output code($\texttt{r}$)=5.  
+  Add `rb`: $16=\texttt{rb}$.  
+  $w=\texttt{b}$.
+\item Next char `a`. $w+\texttt{a}=\texttt{ba}$ not in dictionary.  
+  Output code($\texttt{b}$)=2.  
+  Add `ba`: $17=\texttt{ba}$.  
+  $w=\texttt{a}$.
+\item Next char `d`. $w+\texttt{d}=\texttt{ad}$ is dictionary entry 11, so $w=\texttt{ad}$.  
+  Next char `a`. $w+\texttt{a}=\texttt{ada}$ not in dictionary.  
+  Output code($\texttt{ad}$)=11.  
+  Add `ada`: $18=\texttt{ada}$.  
+  $w=\texttt{a}$.
+\item Next char `c`. $w+\texttt{c}=\texttt{ac}$ is entry 9, so $w=\texttt{ac}$.  
+  Next char `a`. $w+\texttt{a}=\texttt{aca}$ not in dictionary.  
+  Output code($\texttt{ac}$)=9.  
+  Add `aca`: $19=\texttt{aca}$.  
+  $w=\texttt{a}$.
+\item Next char `r`. $w+\texttt{r}=\texttt{ar}$ is entry 15, so $w=\texttt{ar}$.  
+  Next char `b`. $w+\texttt{b}=\texttt{arb}$ not in dictionary.  
+  Output code($\texttt{ar}$)=15.  
+  Add `arb`: $20=\texttt{arb}$.  
+  $w=\texttt{b}$.
+\item Final char `a`. $w+\texttt{a}=\texttt{ba}$ is entry 17, so $w=\texttt{ba}$.  
+  String ends, so output code($\texttt{ba}$)=17.
+\end{enumerate}
+
+Hence the final LZW code stream is:
+\[
+1,\;2,\;5,\;1,\;3,\;1,\;4,\;6,\;8,\;1,\;5,\;2,\;11,\;9,\;15,\;17
+\]
+
+\section{Problem 7: Randomized Hadamard Transform}
+
+\subsection{Problem Statement}
+Let $d=1024$. We:
+\begin{enumerate}
+    \item Generate a random point on the $d$-dimensional unit sphere.
+    \item Rotate it using a Randomized Hadamard Transform (RHT).
+    \item Quantize coordinates to $\pm 1$ by sign.
+    \item Invert the transform.
+    \item Measure mean squared error (MSE) vs.\ the original.
+    \item Repeat 100 times. Give min, mean, max MSE.
+\end{enumerate}
+
+\subsection{Solution and Example Code}
+
+Below is a Python script doing exactly that. It uses NumPy for the Fast Walsh-Hadamard Transform (FWHT) and random number generation. Then it prints the min/mean/max MSE from 100 trials.
+
+\begin{verbatim}
+import numpy as np
+
+def fast_walsh_hadamard_transform(x):
+    """
+    In-place Fast Walsh-Hadamard Transform of x (length must be a power of 2).
+    """
+    n = len(x)
+    h = 1
+    while h < n:
+        for i in range(0, n, h*2):
+            for j in range(i, i+h):
+                a = x[j]
+                b = x[j+h]
+                x[j]   = a + b
+                x[j+h] = a - b
+        h *= 2
+    return x
+
+def inverse_fast_walsh_hadamard_transform(x):
+    """
+    Inverse of FWHT up to a 1/n scaling factor. We'll do the same transform again
+    and then divide by n to get the true inverse of the orthonormal version.
+    """
+    fast_walsh_hadamard_transform(x)
+    return x
+
+def random_point_on_sphere(d):
+    """
+    Generate a random point on the d-dimensional unit sphere.
+    """
+    gauss = np.random.randn(d)
+    norm = np.linalg.norm(gauss)
+    return gauss / norm
+
+def randomized_hadamard_transform(x):
+    """
+    Applies random sign flips and the FWHT. Returns (transformed_vector, sign_flips).
+    """
+    n = len(x)
+    signs = np.random.choice([-1, 1], size=n)
+    x_flipped = x * signs
+    y = fast_walsh_hadamard_transform(x_flipped.copy())
+    # no normalization here
+    return y, signs
+
+def inverse_randomized_hadamard_transform(y, signs):
+    """
+    Invert the randomized hadamard transform. After FWHT, scale by 1/len(y) then
+    flip signs back.
+    """
+    n = len(y)
+    y_inv = inverse_fast_walsh_hadamard_transform(y.copy())
+    y_inv = y_inv / n
+    return y_inv * signs
+
+def experiment(d=1024, trials=100):
+    errors = []
+    for _ in range(trials):
+        # 1) random unit sphere point
+        x_orig = random_point_on_sphere(d)
+        # 2) RHT
+        y, flips = randomized_hadamard_transform(x_orig)
+        # 3) quantize
+        y_quant = np.sign(y)
+        # 4) inverse
+        x_rec = inverse_randomized_hadamard_transform(y_quant, flips)
+        # 5) MSE
+        mse = np.mean((x_rec - x_orig)**2)
+        errors.append(mse)
+    return min(errors), np.mean(errors), max(errors)
+
+if __name__ == "__main__":
+    mn, avg, mx = experiment(d=1024, trials=100)
+    print(f"Min MSE:  {mn}")
+    print(f"Mean MSE: {avg}")
+    print(f"Max MSE:  {mx}")
+\end{verbatim}
+
+\subsection{Sample Results}
+
+My run gave me these results:
+\[
+\text{Min MSE} \approx 3.53 \times 10^{-4},\quad
+\text{Mean MSE} \approx 3.94 \times 10^{-4},\quad
+\text{Max MSE} \approx 4.28 \times 10^{-4}
+\]
 
 \end{document}
